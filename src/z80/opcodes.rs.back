@@ -1,0 +1,21 @@
+#![allow(dead_code)] // FIXME remove
+#![allow(unused_variables)] // FIXME remove
+use z80::cpu::CPU;
+
+pub type Opcode = usize; // FIXME adapt to the actual number of opcode
+pub type Instruction = fn(&mut CPU);
+
+pub struct OpcodeMap {
+    op_map: [Box<Instruction>; 1],
+}
+
+impl OpcodeMap {
+    pub fn new() -> OpcodeMap {
+        OpcodeMap {
+            op_map: [ Box::new(noop) ],
+        }
+    }
+    pub fn map(&self, opcode: Opcode, cpu: &mut CPU) {
+        self.op_map[opcode](cpu)
+    }
+}

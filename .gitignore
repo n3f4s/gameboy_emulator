@@ -1,0 +1,7 @@
+target
+Cargo.lock
+rc
+jsGB
+*.vi
+.alias.sh
+opcode-list-save

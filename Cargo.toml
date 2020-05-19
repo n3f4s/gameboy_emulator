@@ -1,0 +1,7 @@
+[package]
+name = "gba_emul"
+version = "0.1.0"
+authors = ["n3f4s <tiv.crb@gmail.com>"]
+
+[build-dependencies]
+regex = "1"
