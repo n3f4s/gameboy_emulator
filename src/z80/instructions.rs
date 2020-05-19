@@ -4,11 +4,12 @@
 use z80::cpu::{ CPU, Flags };
 
 // 00
+/// Do nothing
 pub fn noop(cpu: &mut CPU) {
     cpu.clock.tick(1);
 }
 
-// Load 16 bit immediate into BC
+/// Load 16 bit immediate into BC
 pub fn LDBCnn(cpu: &mut CPU) {
     cpu.registers.c = cpu.mmu.read_byte(cpu.registers.pc, &cpu.registers);
     cpu.registers.b = cpu.mmu.read_byte(cpu.registers.pc + 1, &cpu.registers);
@@ -16,7 +17,7 @@ pub fn LDBCnn(cpu: &mut CPU) {
     cpu.registers.clock.m = 3; // FIXME ????
 }
 
-// Write the value in register A in the memory at the address pointed to by BC
+/// Write the value in register A in the memory at the address pointed to by BC
 pub fn LDBCmA(cpu: &mut CPU) {
     let b = cpu.registers.b as u16;
     let c = cpu.registers.c as u16;
@@ -26,7 +27,7 @@ pub fn LDBCmA(cpu: &mut CPU) {
 }
 
 // FIXME : use wrapping?
-// 16 bit increment of BC
+/// 16 bit increment of BC
 pub fn INCBC(cpu: &mut CPU) {
     cpu.registers.c = (cpu.registers.c + 1) & 255;
     if cpu.registers.c == 0 {
@@ -95,6 +96,8 @@ pub fn CPL(cpu: &mut CPU) { unimplemented!("CPL not implemented") }
 // 30
 pub fn JRNCn(cpu: &mut CPU) { unimplemented!("JRNCn not implemented") }
 
+
+/// Load 16 bit imediate in SP
 pub fn LDSPnn(cpu: &mut CPU) {
     cpu.registers.sp = cpu.mmu.read_word(cpu.registers.pc, &cpu.registers);
     cpu.registers.pc += 2;
