@@ -74,7 +74,14 @@ pub fn RRA(cpu: &mut CPU) { unimplemented!("RRA not implemented") }
 
 // 20
 pub fn JRNZn(cpu: &mut CPU) { unimplemented!("JRNZn not implemented") }
-pub fn LDHLnn(cpu: &mut CPU) { unimplemented!("LDHLnn not implemented") }
+
+/// Load 16bit imediate into HL
+pub fn LDHLnn(cpu: &mut CPU) { 
+    cpu.registers.l = cpu.mmu.read_byte(cpu.registers.pc, &cpu.registers);
+    cpu.registers.l = cpu.mmu.read_byte(cpu.registers.pc+1, &cpu.registers);
+    cpu.registers.pc += 2;
+    cpu.registers.clock.m += 3
+}
 pub fn LDHLIA(cpu: &mut CPU) { unimplemented!("LDHLIA not implemented") }
 pub fn INCHL(cpu: &mut CPU) { unimplemented!("INCHL not implemented") }
 
