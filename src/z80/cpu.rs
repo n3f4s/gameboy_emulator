@@ -11,6 +11,14 @@ pub const OPERATION: Reg8 = 0x40;
 pub const HALFCARRY: Reg8 = 0x20;
 pub const CARRY: Reg8 = 0x10;
 
+#[repr(u8)]
+pub enum Flags {
+    ZERO      = 0x80,
+    OPERATION = 0x40,
+    HALFCARRY = 0x20,
+    CARRY     = 0x10,
+}
+
 pub struct CPU {
     pub registers: Register,
     pub clock: Clock,

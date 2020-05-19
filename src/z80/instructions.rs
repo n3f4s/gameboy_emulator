@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 #![allow(unused_variables)]
 
-use z80::cpu::CPU;
+use z80::cpu::{ CPU, Flags };
 
 // 00
 pub fn noop(cpu: &mut CPU) {
