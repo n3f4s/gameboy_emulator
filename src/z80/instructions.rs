@@ -266,7 +266,18 @@ pub fn XORr_e(cpu: &mut CPU) { unimplemented!("XORr_e not implemented") }
 pub fn XORr_h(cpu: &mut CPU) { unimplemented!("XORr_h not implemented") }
 pub fn XORr_l(cpu: &mut CPU) { unimplemented!("XORr_l not implemented") }
 pub fn XORHL(cpu: &mut CPU) { unimplemented!("XORHL not implemented") }
-pub fn XORr_a(cpu: &mut CPU) { unimplemented!("XORr_a not implemented") }
+
+/// XOR register 1 with itself
+pub fn XORr_a(cpu: &mut CPU) {
+    cpu.registers.a ^= cpu.registers.a;
+    cpu.registers.a &= 255;
+    cpu.registers.f = if cpu.registers.a != 0 {
+        0
+    } else {
+        Flags::ZERO as u8
+    };
+    cpu.registers.clock.m = 1;
+}
 
 // B0
 pub fn ORr_b(cpu: &mut CPU) { unimplemented!("ORr_b not implemented") }
