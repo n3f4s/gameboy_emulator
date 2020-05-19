@@ -267,7 +267,7 @@ pub fn XORr_h(cpu: &mut CPU) { unimplemented!("XORr_h not implemented") }
 pub fn XORr_l(cpu: &mut CPU) { unimplemented!("XORr_l not implemented") }
 pub fn XORHL(cpu: &mut CPU) { unimplemented!("XORHL not implemented") }
 
-/// XOR register 1 with itself
+/// XOR register a with itself
 pub fn XORr_a(cpu: &mut CPU) {
     cpu.registers.a ^= cpu.registers.a;
     cpu.registers.a &= 255;
