@@ -24,8 +24,10 @@ fn main() {
     let memory = z80::memory::MMU::new(std::fs::read("jsGB/tests/ttt.gb").unwrap());
     let mut cpu = z80::cpu::CPU::new(memory);
     let opcodemap = z80::opcodes::OpcodeMap::new();
+    let mut cycle_count = 0;
     loop {
         // fetch
+        println!(">>>> Cycle {}", cycle_count);
         let op = cpu.mmu.read_byte(cpu.registers.pc, &cpu.registers);
         println!("Got {} from the memory", op);
         cpu.registers.pc += 1;
@@ -33,5 +35,6 @@ fn main() {
         opcodemap.map(op.into(), &mut cpu);
         cpu.update_clock();
         // FIXME add stop condition
+        cycle_count += 1;
     }
 }
