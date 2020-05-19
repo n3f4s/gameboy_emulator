@@ -96,7 +96,7 @@ pub fn CPL(cpu: &mut CPU) { unimplemented!("CPL not implemented") }
 pub fn JRNCn(cpu: &mut CPU) { unimplemented!("JRNCn not implemented") }
 
 pub fn LDSPnn(cpu: &mut CPU) {
-    cpu.registers.sp = cpu.mmu.read_word(cpu.registers.pc);
+    cpu.registers.sp = cpu.mmu.read_word(cpu.registers.pc, &cpu.registers);
     cpu.registers.pc += 2;
     cpu.registers.clock.m = 3;
 }

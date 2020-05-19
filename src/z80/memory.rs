@@ -85,7 +85,11 @@ impl MMU {
         }
         self.memory[address as usize]
     }
-    pub fn read_word(&mut self, address: Address) -> Word { unimplemented!() }
+    pub fn read_word(&mut self, address: Address, reg: &register::Register) -> Word {
+        let beg = self.read_byte(address, reg) as u16;
+        let end = self.read_byte(address + 1, reg) as u16;
+        beg + (end << 8)
+    }
 
     pub fn write_byte(&mut self, address: Address, val: Byte) { unimplemented!() }
     pub fn write_word(&mut self, address: Address, val: Word) { unimplemented!() }
