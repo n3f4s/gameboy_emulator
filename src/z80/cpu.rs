@@ -5,12 +5,6 @@ use z80::memory;
 use z80::register::*;
 use z80::clock::*;
 
-
-pub const ZERO: Reg8 = 0x80;
-pub const OPERATION: Reg8 = 0x40;
-pub const HALFCARRY: Reg8 = 0x20;
-pub const CARRY: Reg8 = 0x10;
-
 #[repr(u8)]
 pub enum Flags {
     ZERO      = 0x80,
