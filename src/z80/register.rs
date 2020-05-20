@@ -19,5 +19,18 @@ pub struct Register {
     pub clock: Clock,
 }
 
+impl Register {
+    pub fn format(&self) -> String {
+        format!(
+"--------------------------------------------------------------------------
+|  a  |  b  |  c  |  d  |  e  |  h  |  l  |  f  ||  sp  ||  pc  || clock |
+| {:03X} | {:03X} | {:03X} | {:03X} | {:03X} | {:03X} | {:03X} | {:03X} || {:04X} || {:04X} || {:02}:{:02} |
+--------------------------------------------------------------------------",
+               self.a, self.b, self.c, self.d, self.e,
+               self.h, self.l, self.f, self.sp, self.pc,
+               self.clock.m, self.clock.t)
+    }
+}
+
 pub type Reg8 = u8; // 8 bit Register
 pub type Reg16 = u16; // 16 bit Register

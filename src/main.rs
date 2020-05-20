@@ -30,6 +30,7 @@ fn main() {
         println!(">>>> Cycle {}", cycle_count);
         let op = cpu.mmu.read_byte(cpu.registers.pc, &cpu.registers);
         println!("Got {} from the memory", op);
+        println!("Registers: \n{}", cpu.registers.format());
         cpu.registers.pc += 1;
         // decode + execute
         opcodemap.map(op.into(), &mut cpu);
