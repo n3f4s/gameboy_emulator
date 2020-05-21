@@ -18,6 +18,35 @@ pub struct MMU {
     rom: Vec<Byte>,
 }
 
+#[derive(Clone)]
+pub struct Bus {
+    memory: std::rc::Rc<MMU>,
+}
+
+impl Bus {
+    pub fn new(rom: Vec<Byte>) -> Bus {
+        Bus {
+            memory: std::rc::Rc::new(MMU::new(rom))
+        }
+    }
+    pub fn read_byte(&mut self, address: Address, reg: &register::RegisterList) -> Byte {
+        std::rc::Rc::get_mut(&mut self.memory).unwrap().read_byte(address, reg)
+    }
+    pub fn read_word(&mut self, address: Address, reg: &register::RegisterList) -> Word {
+        std::rc::Rc::get_mut(&mut self.memory).unwrap().read_word(address, reg)
+    }
+
+    pub fn write_byte(&mut self, address: Address, val: Byte) {
+        std::rc::Rc::get_mut(&mut self.memory).unwrap().write_byte(address, val)
+
+    }
+    pub fn write_word(&mut self, address: Address, val: Word) {
+        std::rc::Rc::get_mut(&mut self.memory).unwrap().write_word(address, val)
+
+    }
+
+}
+
 
 // FIXME : trouver methode plus efficace pour copier les tableaux
 impl MMU {
