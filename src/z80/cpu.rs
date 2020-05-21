@@ -14,7 +14,7 @@ pub enum Flags {
 }
 
 pub struct CPU {
-    pub registers: Register,
+    pub registers: RegisterList,
     pub clock: Clock,
     pub mmu: memory::MMU, // FIXME doit être une référence
 }
@@ -22,7 +22,7 @@ pub struct CPU {
 impl CPU {
     pub fn new(mmu: memory::MMU) -> CPU {
         CPU {
-            registers: Register::default(),
+            registers: RegisterList::default(),
             clock: Clock::default(),
             mmu: mmu
         }

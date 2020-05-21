@@ -5,7 +5,7 @@ use std::num::Wrapping;
 use z80::clock::Clock;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
-pub struct Register {
+pub struct RegisterList {
     pub a: Reg8,
     pub b: Reg8,
     pub c: Reg8,
@@ -13,15 +13,16 @@ pub struct Register {
     pub e: Reg8,
     pub h: Reg8,
     pub l: Reg8,
-    pub f: Reg8,
 
-    pub pc: Reg16,
-    pub sp: Reg16,
+    pub f: Reg8, /// Flags
+
+    pub pc: Reg16, /// Program Counter
+    pub sp: Reg16, /// Stack pointer
 
     pub clock: Clock,
 }
 
-impl Register {
+impl RegisterList {
     pub fn format(&self) -> String {
         format!(
 "--------------------------------------------------------------------------

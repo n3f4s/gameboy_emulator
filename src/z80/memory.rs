@@ -59,7 +59,7 @@ impl MMU {
         }
     }
 
-    pub fn read_byte(&mut self, address: Address, reg: &register::Register) -> Byte {
+    pub fn read_byte(&mut self, address: Address, reg: &register::RegisterList) -> Byte {
         println!("Reading a byte at the address {}", address);
         match address & 0x0F000 {
             0x0000 => {
@@ -86,7 +86,7 @@ impl MMU {
         }
         self.memory[address as usize]
     }
-    pub fn read_word(&mut self, address: Address, reg: &register::Register) -> Word {
+    pub fn read_word(&mut self, address: Address, reg: &register::RegisterList) -> Word {
         let beg = self.read_byte(address, reg) as u16;
         let end = self.read_byte(address + 1, reg) as u16;
         beg + (end << 8)
