@@ -229,7 +229,18 @@ pub fn LDrr_aa(cpu: &mut CPU) { unimplemented!("LDrr_aa not implemented") }
 pub fn ADDr_b(cpu: &mut CPU) { unimplemented!("ADDr_b not implemented") }
 pub fn ADDr_c(cpu: &mut CPU) { unimplemented!("ADDr_c not implemented") }
 pub fn ADDr_d(cpu: &mut CPU) { unimplemented!("ADDr_d not implemented") }
-pub fn ADDr_e(cpu: &mut CPU) { unimplemented!("ADDr_e not implemented") }
+
+/// Add register E to register A and save in register A
+pub fn ADDr_e(cpu: &mut CPU) {
+    cpu.registers.f = Wrapping(0);
+    let (a, carry) = cpu.registers.a.0.overflowing_add(cpu.registers.e.0);
+    if carry {
+        cpu.registers.f |= Wrapping(Flags::CARRY as u8);
+    }
+    if cpu.registers.a == Wrapping(0) {
+        cpu.registers.f |= Wrapping(Flags::ZERO as u8);
+    }
+}
 
 pub fn ADDr_h(cpu: &mut CPU) { unimplemented!("ADDr_h not implemented") }
 pub fn ADDr_l(cpu: &mut CPU) { unimplemented!("ADDr_l not implemented") }
