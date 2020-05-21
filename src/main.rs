@@ -1,3 +1,4 @@
+use std::num::Wrapping;
 
 mod z80;
 
@@ -28,10 +29,10 @@ fn main() {
     loop {
         // fetch
         println!(">>>> Cycle {}", cycle_count);
-        let op = cpu.mmu.read_byte(cpu.registers.pc, &cpu.registers);
+        let op = cpu.mmu.read_byte(cpu.registers.pc.0, &cpu.registers);
         println!("Got {} from the memory", op);
         println!("Registers: \n{}", cpu.registers.format());
-        cpu.registers.pc += 1;
+        cpu.registers.pc += Wrapping(1);
         // decode + execute
         opcodemap.map(op.into(), &mut cpu);
         cpu.update_clock();

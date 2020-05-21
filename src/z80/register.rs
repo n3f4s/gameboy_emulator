@@ -1,5 +1,7 @@
 #![allow(dead_code)] // FIXME remove
 #![allow(unused_variables)] // FIXME remove
+use std::num::Wrapping;
+
 use z80::clock::Clock;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
@@ -32,5 +34,5 @@ impl Register {
     }
 }
 
-pub type Reg8 = u8; // 8 bit Register
-pub type Reg16 = u16; // 16 bit Register
+pub type Reg8 = Wrapping<u8>; // 8 bit Register
+pub type Reg16 = Wrapping<u16>; // 16 bit Register
