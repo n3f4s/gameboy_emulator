@@ -7,9 +7,13 @@ use z80::clock::*;
 
 #[repr(u8)]
 pub enum Flags {
+ /// The last operation returned 0
     ZERO      = 0x80,
+    /// The last operation was a substraction
     OPERATION = 0x40,
+    /// The lower part of the byte overflowed during last operation
     HALFCARRY = 0x20,
+    /// The byte overflowed during last operation
     CARRY     = 0x10,
 }
 
@@ -22,7 +26,7 @@ pub struct CPU {
 impl CPU {
     pub fn new(mmu: memory::MMU) -> CPU {
         CPU {
-            registers: RegisterList::default(),
+            registers: RegisterList::new(),
             clock: Clock::default(),
             mmu: mmu
         }

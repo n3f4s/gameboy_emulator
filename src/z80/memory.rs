@@ -1,7 +1,6 @@
 #![allow(dead_code)] // FIXME remove
 #![allow(unused_variables)] // FIXME remove
 
-use std::num::Wrapping;
 use z80::register;
 
 pub type Address = u16; // type of an address value
@@ -95,7 +94,7 @@ impl MMU {
                 // If the bios is loaded the read the bios
                 // Unload the bios if PC is at the trigger value
                 // If the bios isn't loaded read the rom
-                if reg.pc == Wrapping(0x0100) { self.map_rom() }
+                if reg.pc == 0x0100 { self.map_rom() }
             }
             0xF000 => {
                 match address & 0x00F00 {

@@ -1,7 +1,6 @@
 #![allow(dead_code)] // FIXME remove
 #![allow(unused_variables)] // FIXME remove
 // FIXME: see what the clock members represents
-use std::num::Wrapping;
 use z80::register::Reg8;
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub struct Clock {
@@ -11,8 +10,8 @@ pub struct Clock {
 
 impl Clock {
     pub fn tick(&mut self, cycle: u8) {
-        self.m = Wrapping(cycle);
-        self.t = Wrapping(4  * cycle);
+        self.m = cycle;
+        self.t = 4  * cycle;
     }
 }
 

@@ -1,8 +1,7 @@
 #![allow(non_snake_case)]
 #![allow(unused_variables)]
 
-use std::num::Wrapping;
-use z80::cpu::{ CPU, Flags };
+use z80::cpu::{ CPU, };
 
 // 00
 /// Do nothing
@@ -12,29 +11,27 @@ pub fn noop(cpu: &mut CPU) {
 
 /// Load 16 bit immediate into BC
 pub fn LDBCnn(cpu: &mut CPU) {
-    cpu.registers.c = Wrapping( cpu.mmu.read_byte(cpu.registers.pc.0, &cpu.registers) );
-    cpu.registers.b = Wrapping( cpu.mmu.read_byte(cpu.registers.pc.0 + 1, &cpu.registers) );
-    cpu.registers.pc += Wrapping(2);
-    cpu.registers.clock.m = Wrapping(3); // FIXME ????
+    cpu.registers.c =  cpu.mmu.read_byte(cpu.registers.pc, &cpu.registers );
+    cpu.registers.b =  cpu.mmu.read_byte(cpu.registers.pc + 1, &cpu.registers );
+    cpu.registers.pc += 2;
+    cpu.registers.clock.m = 3; // FIXME ????
 }
 
 /// Write the value in register A in the memory at the address pointed to by BC
 pub fn LDBCmA(cpu: &mut CPU) {
-    let b = Wrapping(cpu.registers.b.0 as u16);
-    let c = Wrapping(cpu.registers.c.0 as u16);
+    let b = cpu.registers.b as u16;
+    let c = cpu.registers.c as u16;
     let bc = (b << 8 ) + c;
-    cpu.mmu.write_byte(bc.0.into(), cpu.registers.a.0);
-    cpu.registers.clock.m = Wrapping(2);
+    cpu.mmu.write_byte(bc.into(), cpu.registers.a);
+    cpu.registers.clock.m = 2;
 }
 
-// FIXME : use wrapping?
 /// 16 bit increment of BC
 pub fn INCBC(cpu: &mut CPU) {
-    cpu.registers.c += Wrapping(1);
-    if cpu.registers.c == Wrapping(0) {
-        cpu.registers.b += Wrapping(1);
-    };
-    cpu.registers.clock.m = Wrapping(1);
+    let res = cpu.registers.incr_word(cpu.registers.c, cpu.registers.b);
+    cpu.registers.c = res.low;
+    cpu.registers.b = res.high;
+    cpu.registers.clock.m = 1;
 }
 
 pub fn INCr_b(cpu: &mut CPU) { unimplemented!("INCr_b not implemented") }
@@ -78,10 +75,10 @@ pub fn JRNZn(cpu: &mut CPU) { unimplemented!("JRNZn not implemented") }
 
 /// Load 16bit imediate into HL
 pub fn LDHLnn(cpu: &mut CPU) { 
-    cpu.registers.l = Wrapping(cpu.mmu.read_byte(cpu.registers.pc.0, &cpu.registers));
-    cpu.registers.l = Wrapping(cpu.mmu.read_byte(cpu.registers.pc.0 + 1, &cpu.registers));
-    cpu.registers.pc += Wrapping(2);
-    cpu.registers.clock.m += Wrapping(3);
+    cpu.registers.l = cpu.mmu.read_byte(cpu.registers.pc, &cpu.registers);
+    cpu.registers.h = cpu.mmu.read_byte(cpu.registers.pc + 1, &cpu.registers);
+    cpu.registers.pc += 2;
+    cpu.registers.clock.m += 3;
 }
 pub fn LDHLIA(cpu: &mut CPU) { unimplemented!("LDHLIA not implemented") }
 pub fn INCHL(cpu: &mut CPU) { unimplemented!("INCHL not implemented") }
@@ -107,22 +104,21 @@ pub fn JRNCn(cpu: &mut CPU) { unimplemented!("JRNCn not implemented") }
 
 /// Load 16 bit imediate in SP
 pub fn LDSPnn(cpu: &mut CPU) {
-    cpu.registers.sp = Wrapping(cpu.mmu.read_word(cpu.registers.pc.0, &cpu.registers));
-    cpu.registers.pc += Wrapping(2);
-    cpu.registers.clock.m = Wrapping(3);
+    cpu.registers.sp = cpu.mmu.read_word(cpu.registers.pc, &cpu.registers);
+    cpu.registers.pc += 2;
+    cpu.registers.clock.m = 3;
 }
 /// Save register A the address in the memory at the address saved
 /// in HL and decrement HL
 pub fn LDHLDA(cpu: &mut CPU) {
-    let l = Wrapping(cpu.registers.l.0 as u16);
-    let h = Wrapping(cpu.registers.h.0 as u16);
+    let l = cpu.registers.l as u16;
+    let h = cpu.registers.h as u16;
     let addr = l + (h << 8);
-    cpu.mmu.write_byte(addr.0, cpu.registers.a.0);
-    cpu.registers.l -= Wrapping(1);
-    if cpu.registers.l == Wrapping(255) {
-        cpu.registers.h -= Wrapping(1);
-    }
-    cpu.registers.clock.m = Wrapping(2);
+    cpu.mmu.write_byte(addr, cpu.registers.a);
+    let res = cpu.registers.decr_word(cpu.registers.l, cpu.registers.h);
+    cpu.registers.l = res.low;
+    cpu.registers.h = res.high;
+    cpu.registers.clock.m = 2;
 }
 pub fn INCSP(cpu: &mut CPU) { unimplemented!("INCSP not implemented") }
 
@@ -232,14 +228,7 @@ pub fn ADDr_d(cpu: &mut CPU) { unimplemented!("ADDr_d not implemented") }
 
 /// Add register E to register A and save in register A
 pub fn ADDr_e(cpu: &mut CPU) {
-    cpu.registers.f = Wrapping(0);
-    let (a, carry) = cpu.registers.a.0.overflowing_add(cpu.registers.e.0);
-    if carry {
-        cpu.registers.f |= Wrapping(Flags::CARRY as u8);
-    }
-    if cpu.registers.a == Wrapping(0) {
-        cpu.registers.f |= Wrapping(Flags::ZERO as u8);
-    }
+    cpu.registers.a = cpu.registers.add(cpu.registers.a, cpu.registers.e);
 }
 
 pub fn ADDr_h(cpu: &mut CPU) { unimplemented!("ADDr_h not implemented") }
@@ -300,14 +289,8 @@ pub fn XORHL(cpu: &mut CPU) { unimplemented!("XORHL not implemented") }
 
 /// XOR register a with itself
 pub fn XORr_a(cpu: &mut CPU) {
-    cpu.registers.a ^= cpu.registers.a;
-    cpu.registers.a &= Wrapping(255);
-    cpu.registers.f = Wrapping(if cpu.registers.a != Wrapping(0) {
-        0
-    } else {
-        Flags::ZERO as u8
-    });
-    cpu.registers.clock.m = Wrapping(1);
+    cpu.registers.a = cpu.registers.xor(cpu.registers.a, cpu.registers.a);
+    cpu.registers.clock.m = 1;
 }
 
 // B0
