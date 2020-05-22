@@ -1,4 +1,3 @@
-use std::num::Wrapping;
 
 mod z80;
 
@@ -17,6 +16,9 @@ mod z80;
  * 6- multithread???
  */
 
+// FIXME : transformer les instructions de &mut CPU -> () à CPU -> CPU, idem pour les operations
+// sur les registres
+// FIXME : faire en sorte que le CPU n'ai qu'une ref vers la mémoire
 // FIXME add login
 // FIXME split part into threads?
 
