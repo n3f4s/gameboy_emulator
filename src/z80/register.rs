@@ -57,21 +57,19 @@ impl RegisterList {
 
     /// Do a 8bit increment on a register
     pub fn incr(&mut self, reg: Reg8) -> Reg8 {
-        // FIXME check if setting flag is needed
         let (new, carry) = reg.overflowing_add(1);
-        // self.test_and_set(reg, carry, false);
+        self.test_and_set(reg, carry, false);
         new
     }
 
     /// Do a 16bit increment on two registers
     pub fn incr_word(&mut self, low: Reg8, high: Reg8) -> RegWord {
-        // FIXME check if setting flag is needed
         let (newl, carry) = low.overflowing_add(1);
         let mut newh = high;
         if carry {
             let (new, carry) = high.overflowing_add(1);
             newh = new;
-            // self.test_and_set(high, carry, false);
+            self.test_and_set(newh, carry, false);
         }
         RegWord {
             high: newh,
@@ -80,11 +78,10 @@ impl RegisterList {
     }
 
     /// Do a 8bit decrement on a register
-    pub fn decr(&mut self, reg: &mut Reg8) {
-        // FIXME check if setting flag is needed
+    pub fn decr(&mut self, reg: Reg8) -> Reg8 {
         let (new, carry) = reg.overflowing_sub(1);
-        *reg = new;
-        // self.test_and_set(reg, carry, false);
+        self.test_and_set(reg, carry, true);
+        new
     }
 
     /// Do a 16bit decrement on two registers
@@ -95,7 +92,7 @@ impl RegisterList {
         if carry {
             let (new, carry) = low.overflowing_sub(1);
             newl = new;
-            // self.test_and_set(high, carry, true);
+            self.test_and_set(newl, carry, true);
         }
         RegWord {
             low: newl,
