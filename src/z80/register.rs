@@ -86,7 +86,6 @@ impl RegisterList {
 
     /// Do a 16bit decrement on two registers
     pub fn decr_word(&mut self, low: Reg8, high: Reg8) -> RegWord {
-        // FIXME check if setting flag is needed
         let (newh, carry) = high.overflowing_sub(1);
         let mut newl = low;
         if carry {
