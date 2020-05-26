@@ -2,21 +2,31 @@
 #![allow(unused_variables)] // FIXME remove
 use z80::clock::Clock;
 use z80::cpu::Flags;
+use z80::memory::MMU;
 
 pub struct RegWord {
     pub low: u8,
     pub high: u8,
 }
 
-#[derive(Default)]
+#[repr(usize)]
+pub enum Register {
+    A = 0,
+    B = 1,
+    C = 2,
+    D = 3,
+    E = 4,
+    H = 5,
+    L = 6,
+}
+
+impl std::convert::Into<usize> for Register {
+    fn into(self) -> usize { self as usize }
+}
+
+#[derive(Default, Clone)]
 pub struct RegisterList {
-    pub a: Reg8,
-    pub b: Reg8,
-    pub c: Reg8,
-    pub d: Reg8,
-    pub e: Reg8,
-    pub h: Reg8,
-    pub l: Reg8,
+    reg: [Reg8; 7],
 
     pub f: Reg8, /// Flags
 
@@ -33,82 +43,181 @@ impl RegisterList {
 |  a  |  b  |  c  |  d  |  e  |  h  |  l  |  f  ||  sp  ||  pc  || clock |
 | {:03X} | {:03X} | {:03X} | {:03X} | {:03X} | {:03X} | {:03X} | {:03X} || {:04X} || {:04X} || {:02}:{:02} |
 --------------------------------------------------------------------------",
-               self.a, self.b, self.c, self.d, self.e,
-               self.h, self.l, self.f, self.sp, self.pc,
+               self.get(Register::A), self.get(Register::B), self.get(Register::C),
+               self.get(Register::D), self.get(Register::E),
+               self.get(Register::H), self.get(Register::L), self.f, self.sp, self.pc,
                self.clock.m, self.clock.t)
     }
 
-    /// Set the flag according to the value of the register
-    pub fn test_and_set(&mut self, reg: Reg8, carry: bool, op: bool) {
-        self.f = 0;
-        if carry { // overflow/underflow check
-            self.f |= Flags::CARRY as u8
-        }
-        if op { // substraction check
-            self.f |= Flags::OPERATION as u8
-        }
-        if reg == 0 { // check if the result of the last operation is 0
-            self.f |= Flags::ZERO as u8;
-        }
-        if reg > 15 { // check overflow for the lower part of the byte
-            self.f |= Flags::HALFCARRY as u8;
-        }
+    pub fn get(&self, reg: Register) -> Reg8 {
+        self.reg[reg as usize]
     }
-
-    /// Do a 8bit increment on a register
-    pub fn incr(&mut self, reg: Reg8) -> Reg8 {
-        let (new, carry) = reg.overflowing_add(1);
-        self.test_and_set(reg, carry, false);
-        new
-    }
-
-    /// Do a 16bit increment on two registers
-    pub fn incr_word(&mut self, low: Reg8, high: Reg8) -> RegWord {
-        let (newl, carry) = low.overflowing_add(1);
-        let mut newh = high;
-        if carry {
-            let (new, carry) = high.overflowing_add(1);
-            newh = new;
-            self.test_and_set(newh, carry, false);
-        }
-        RegWord {
-            high: newh,
-            low: newl,
-        }
-    }
-
-    /// Do a 8bit decrement on a register
-    pub fn decr(&mut self, reg: Reg8) -> Reg8 {
-        let (new, carry) = reg.overflowing_sub(1);
-        self.test_and_set(reg, carry, true);
-        new
-    }
-
-    /// Do a 16bit decrement on two registers
-    pub fn decr_word(&mut self, low: Reg8, high: Reg8) -> RegWord {
-        let (newh, carry) = high.overflowing_sub(1);
-        let mut newl = low;
-        if carry {
-            let (new, carry) = low.overflowing_sub(1);
-            newl = new;
-            self.test_and_set(newl, carry, true);
-        }
-        RegWord {
-            low: newl,
-            high: newh,
-        }
-    }
-
-    pub fn xor(&mut self, lhs: Reg8, rhs: Reg8) -> Reg8 {
-        let res = lhs ^ rhs;
-        self.test_and_set(res, false, false);
+    pub fn set(&self, reg: Register, value: Reg8) -> RegisterList {
+        let res = self.clone();
+        res.reg[reg as usize] = value;
         res
     }
 
-    pub fn add(&mut self, lhs: u8, rhs: u8) -> Reg8 {
-        let (new, carry) = lhs.overflowing_add(rhs);
-        self.test_and_set(new, carry, false);
-        new
+    /// Compute the flags according to the result of the operation
+    pub fn test_and_set(&self, reg: Reg8, carry: bool, op: bool) -> RegisterList {
+        let carryf = if carry { // overflow/underflow check
+            Flags::CARRY as u8
+        } else {
+            0
+        };
+        let opf = if op { // substraction check
+            Flags::OPERATION as u8
+        } else {
+            0
+        };
+        let zerof = if reg == 0 { // check if the result of the last operation is 0
+            Flags::ZERO as u8
+        } else {
+            0
+        };
+        let halff = if reg > 15 { // check overflow for the lower part of the byte
+            Flags::HALFCARRY as u8
+        } else {
+            0
+        };
+        RegisterList {
+            reg: self.reg,
+            clock: self.clock,
+            pc: self.pc,
+            sp: self.sp,
+            f: carryf | opf | zerof | halff
+        }
+    }
+
+    /// Do a 8bit increment on a register and set the flags
+    pub fn incr(&self, reg: Register) -> RegisterList {
+        let (new, carry) = self.get(reg).overflowing_add(1);
+        self.set(reg, new).test_and_set(new, carry, false)
+    }
+
+    // FIXME utiliser le même pattern fonctionnel pour toutes les fonctions
+    // FIXME enlever mmu de CPU et utiliser le paramètre des opcodes
+    // FIXME transformer les instructions pour ne plus modifier le CPU mais renvoyer un nouveau
+    /// Do a 16bit increment on two registers and set the flags
+    pub fn incr_word(&self, low: Register, high: Register) -> RegisterList {
+        let (newl, c) = self.get(low).overflowing_add(1);
+        let (newh, carry) = if c {
+            self.get(high).overflowing_add(1)
+        } else {
+            (self.get(high), false)
+        };
+        self.set(low, newl).set(high, newh).test_and_set(newh, carry, false)
+    }
+
+    /// Do a 8bit decrement on a register and set the flags
+    pub fn decr(&mut self, reg: Register) -> RegisterList {
+        let (new, carry) = self.get(reg).overflowing_sub(1);
+        self.set(reg, new).test_and_set(new, carry, true)
+    }
+
+    /// Do a 16bit decrement on two registers and set the flags
+    pub fn decr_word(&self, low: Register, high: Register) -> RegisterList {
+        let (newl, c) = self.get(low).overflowing_sub(1);
+        let (newh, carry) = if c {
+            self.get(high).overflowing_sub(1)
+        } else {
+            (self.get(high), false)
+        };
+        self.set(low, newl).set(high, newh).test_and_set(newh, carry, false)
+    }
+
+    /// Do an exclusive or on 2 register and set the flags
+    pub fn xor(&mut self, lhs: Register, rhs: Register) -> RegisterList {
+        let res = self.get(lhs) ^ self.get(rhs);
+        self.set(lhs, res).test_and_set(res, false, false)
+    }
+
+    /// Add two register and set the flags
+    pub fn add(&self, lhs: Register, rhs: Register) -> RegisterList {
+        let (res, carry) = self.get(lhs).overflowing_add(self.get(rhs));
+        self.set(lhs, res).test_and_set(res, carry, false)
+    }
+
+    /// Compare two registers:
+    /// The result is computed by substracting lhs and rhs and setting the flags according to the
+    /// result of the substraction
+    /// Underflow -> B > A
+    /// Zero      -> B = A
+    /// Nothing   -> B < A
+    pub fn cmp(&self, lhs: Register, rhs: Register) -> RegisterList {
+        let (res, carry) = self.get(lhs).overflowing_sub(self.get(rhs));
+        self.test_and_set(res, carry, false)
+    }
+
+    /// Substract two register and set the flags
+    pub fn sub(&mut self, lhs: Register, rhs: Register) -> RegisterList {
+        let (res, carry) = self.get(lhs).overflowing_sub(self.get(rhs));
+        self.set(lhs, res).test_and_set(res, carry, true)
+    }
+
+    pub fn set_clock(&self, clock: Clock) -> RegisterList {
+        RegisterList {
+            reg: self.reg,
+
+            f: self.f, /// Flags
+
+            pc: self.pc, /// Program Counter
+            sp: self.sp, /// Stack pointer
+
+            clock: clock,
+        }
+    }
+
+    pub fn incr_pc(&self, pc_i: Reg16) -> RegisterList {
+        RegisterList {
+            reg: self.reg,
+
+            f: self.f, /// Flags
+
+            pc: self.pc, /// Program Counter
+            sp: self.sp + pc_i, /// Stack pointer
+
+            clock: self.clock,
+        }
+    }
+
+    /// Load 16 bit into SP
+    pub fn load_sp(&self, mmu: &mut MMU) -> RegisterList {
+        RegisterList {
+            reg: self.reg,
+            f: self.f,
+            pc: self.pc,
+            sp: mmu.read_word(self.pc, &self),
+            clock: self.clock,
+        }
+    }
+    pub fn push_sp(&self) -> RegisterList {
+        RegisterList {
+            reg: self.reg,
+            f: self.f,
+            pc: self.pc,
+            sp: self.sp-1,
+            clock: self.clock,
+        }
+    }
+    pub fn pop_sp(&self) -> RegisterList {
+        RegisterList {
+            reg: self.reg,
+            f: self.f,
+            pc: self.pc,
+            sp: self.sp+1,
+            clock: self.clock,
+        }
+    }
+
+    pub fn push_stach(&self, mmu: &mut MMU, val: Reg8) -> RegisterList {
+        let cpu = self.push_sp();
+        mmu.write_byte(cpu.sp, val);
+        cpu
+    }
+    pub fn pop_stack(&mut self, mmu: &mut MMU, reg: Register) -> RegisterList {
+        let res = mmu.read_byte(self.sp, &self);
+        self.pop_sp().set(reg, res)
     }
 
     pub fn new() -> RegisterList {

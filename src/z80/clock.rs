@@ -9,9 +9,11 @@ pub struct Clock {
 }
 
 impl Clock {
-    pub fn tick(&mut self, cycle: u8) {
-        self.m = cycle;
-        self.t = 4  * cycle;
+    pub fn tick(cycle: u8) -> Clock {
+        Clock {
+            m: cycle,
+            t: 4 * cycle,
+        }
     }
 }
 

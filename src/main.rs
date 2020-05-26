@@ -24,19 +24,19 @@ mod z80;
 
 fn main() {
     // Init the different part of the emulator
-    let memory = z80::memory::MMU::new(std::fs::read("jsGB/tests/ttt.gb").unwrap());
-    let mut cpu = z80::cpu::CPU::new(memory);
+    let mut memory = z80::memory::MMU::new(std::fs::read("jsGB/tests/ttt.gb").unwrap());
+    let mut cpu = z80::cpu::CPU::new();
     let opcodemap = z80::opcodes::OpcodeMap::new();
     let mut cycle_count = 0;
     loop {
         // fetch
         println!(">>>> Cycle {}", cycle_count);
-        let op = cpu.mmu.read_byte(cpu.registers.pc, &cpu.registers);
+        let op = memory.read_byte(cpu.registers.pc, &cpu.registers);
         println!("Got {} from the memory", op);
         println!("Registers: \n{}", cpu.registers.format());
         cpu.registers.pc += 1;
         // decode + execute
-        opcodemap.map(op.into(), &mut cpu);
+        cpu.registers = opcodemap.map(op.into(), &cpu.registers, &mut memory);
         cpu.update_clock();
         // FIXME add stop condition
         cycle_count += 1;
