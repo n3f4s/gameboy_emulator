@@ -372,10 +372,9 @@ pub fn LDIOnA(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!
 
 /// Pop register H & L off the stack
 pub fn POPHL(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
-    let r = cpu.pop_stack(mmu, Register::L)
-        .pop_stack(mmu, Register::H);
-    r.clock = Clock::tick(3);
-    r
+    cpu.pop_stack(mmu, Register::L)
+        .pop_stack(mmu, Register::H)
+        .set_clock(Clock::tick(3))
 }
 pub fn LDIOCA(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("LDIOCA not implemented") }
 
