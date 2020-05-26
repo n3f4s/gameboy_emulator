@@ -400,7 +400,10 @@ pub fn ORn(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("O
 pub fn RST30(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("RST30 not implemented") }
 
 pub fn LDHLSPn(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("LDHLSPn not implemented") }
-pub fn LDAmm(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("LDAmm not implemented") }
+pub fn LDAmm(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    let addr = mmu.read_word(cpu.pc, &cpu);
+    cpu.incr_pc(2).set(Register::A, mmu.read_byte(addr, &cpu)).set_clock(Clock::tick(3))
+}
 pub fn EI(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("EI not implemented") }
 
 pub fn CPn(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("CPn not implemented") }
