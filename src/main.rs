@@ -24,7 +24,7 @@ mod z80;
 
 fn main() {
     // Init the different part of the emulator
-    let mut memory = z80::memory::MMU::new(std::fs::read("jsGB/tests/ttt.gb").unwrap());
+    let mut memory = z80::memory::MMU::new(std::fs::read("rc/ttt.gb").unwrap());
     let mut cpu = z80::cpu::CPU::new();
     let opcodemap = z80::opcodes::OpcodeMap::new();
     let mut cycle_count = 0;
