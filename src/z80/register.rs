@@ -175,8 +175,8 @@ impl RegisterList {
 
             f: self.f, /// Flags
 
-            pc: self.pc, /// Program Counter
-            sp: self.sp + pc_i, /// Stack pointer
+            pc: self.pc + pc_i, /// Program Counter
+            sp: self.sp, /// Stack pointer
 
             clock: self.clock,
         }
