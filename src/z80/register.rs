@@ -10,6 +10,7 @@ pub struct RegWord {
 }
 
 #[repr(usize)]
+#[derive(Copy, Clone)]
 pub enum Register {
     A = 0,
     B = 1,
@@ -53,7 +54,7 @@ impl RegisterList {
         self.reg[reg as usize]
     }
     pub fn set(&self, reg: Register, value: Reg8) -> RegisterList {
-        let res = self.clone();
+        let mut res = self.clone();
         res.reg[reg as usize] = value;
         res
     }
@@ -127,7 +128,7 @@ impl RegisterList {
     }
 
     /// Do an exclusive or on 2 register and set the flags
-    pub fn xor(&mut self, lhs: Register, rhs: Register) -> RegisterList {
+    pub fn xor(&self, lhs: Register, rhs: Register) -> RegisterList {
         let res = self.get(lhs) ^ self.get(rhs);
         self.set(lhs, res).test_and_set(res, false, false)
     }
@@ -215,7 +216,7 @@ impl RegisterList {
         mmu.write_byte(cpu.sp, val);
         cpu
     }
-    pub fn pop_stack(&mut self, mmu: &mut MMU, reg: Register) -> RegisterList {
+    pub fn pop_stack(&self, mmu: &mut MMU, reg: Register) -> RegisterList {
         let res = mmu.read_byte(self.sp, &self);
         self.pop_sp().set(reg, res)
     }

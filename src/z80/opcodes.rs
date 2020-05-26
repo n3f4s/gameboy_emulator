@@ -1,12 +1,11 @@
 #![allow(dead_code)] // FIXME remove
 #![allow(unused_variables)] // FIXME remove
-use z80::cpu::CPU;
 use z80::instructions::*;
 use z80::memory::MMU;
 use z80::register::RegisterList;
 
 pub type Opcode = usize; // FIXME adapt to the actual number of opcode
-pub type Instruction = fn(RegisterList, &mut MMU) -> Register;
+pub type Instruction = fn(RegisterList, &mut MMU) -> RegisterList;
 
 pub struct OpcodeMap<'a> {
     pub op_map: [Box<Instruction>; 256],

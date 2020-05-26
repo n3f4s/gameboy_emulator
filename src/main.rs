@@ -36,7 +36,7 @@ fn main() {
         println!("Registers: \n{}", cpu.registers.format());
         cpu.registers.pc += 1;
         // decode + execute
-        cpu.registers = opcodemap.map(op.into(), &cpu.registers, &mut memory);
+        cpu.registers = opcodemap.map(op.into(), cpu.registers, &mut memory);
         cpu.update_clock();
         // FIXME add stop condition
         cycle_count += 1;
