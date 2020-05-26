@@ -1,8 +1,6 @@
 #![allow(non_snake_case)]
 #![allow(unused_variables)]
 
-#[macro_use]
-use z80::cpu::{ CPU, };
 use z80::memory::MMU;
 use z80::register::{ Register, RegisterList };
 use z80::clock::Clock;
@@ -332,7 +330,6 @@ pub fn CALLNZnn(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemente
 
 /// Push registers B and C to the stack
 pub fn PUSHBC(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
-    // FIXME not pretty
     cpu
         .push_stach(mmu, cpu.get( Register::B ))
         .push_stach(mmu, cpu.get( Register::C ))

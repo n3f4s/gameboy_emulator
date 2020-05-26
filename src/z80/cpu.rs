@@ -2,8 +2,6 @@
 #![allow(unused_variables)] // FIXME remove
 #![allow(non_snake_case)]
 
-#[macro_use]
-
 use z80::register::*;
 use z80::clock::*;
 
@@ -22,25 +20,6 @@ pub enum Flags {
 impl std::convert::Into<u8> for Flags {
     fn into(self) -> u8 { self as u8 }
 }
-
-// macro_rules! CPU {
-//     ( reg => $reg:expr ) => {
-//         {
-//             CPU {
-//                 clock: cpu.clock,
-//                 registers: $reg
-//             }
-//         }
-//     };
-//     ( clock => $clock:expr ) => {
-//         {
-//             CPU {
-//                 clock: $clock,
-//                 registers: cpu.registers,
-//             }
-//         }
-//     };
-// }
 
 #[derive(Clone)]
 pub struct CPU {
