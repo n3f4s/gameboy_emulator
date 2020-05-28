@@ -106,6 +106,14 @@ impl MMU {
         beg + (end << 8)
     }
 
-    pub fn write_byte(&mut self, address: Address, val: Byte) { unimplemented!() }
-    pub fn write_word(&mut self, address: Address, val: Word) { unimplemented!() }
+    pub fn write_byte(&mut self, address: Address, val: Byte) {
+        // FIXME : check if there are more things to do?
+        self.memory[address as usize] = val;
+    }
+    pub fn write_word(&mut self, address: Address, val: Word) {
+        let beg = (val & 255) as u8;
+        let end = (val >> 8) as u8;
+        self.write_byte(address, beg);
+        self.write_byte(address+1, end);
+    }
 }
