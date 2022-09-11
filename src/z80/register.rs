@@ -9,6 +9,9 @@ pub struct RegWord {
     pub high: u8,
 }
 
+// FIXME impl add and sub for 16bit
+
+
 #[repr(usize)]
 #[derive(Copy, Clone)]
 pub enum Register {
@@ -59,47 +62,50 @@ impl RegisterList {
         res
     }
 
-    /// Compute the flags according to the result of the operation
-    pub fn test_and_set(&self, reg: Reg8, carry: bool, op: bool) -> RegisterList {
-        let carryf = if carry { // overflow/underflow check
-            Flags::CARRY as u8
-        } else {
-            0
-        };
-        let opf = if op { // substraction check
-            Flags::OPERATION as u8
-        } else {
-            0
-        };
-        let zerof = if reg == 0 { // check if the result of the last operation is 0
-            Flags::ZERO as u8
-        } else {
-            0
-        };
-        let halff = if reg > 15 { // check overflow for the lower part of the byte
-            Flags::HALFCARRY as u8
-        } else {
-            0
-        };
+    pub fn get_flag(&self, flag: Flags) -> bool {
+        self.f & (flag as u8) != 0
+    }
+
+    /// Set a flag if needed
+    pub fn set_flag(&self, flag: Flags, need_set: bool) -> RegisterList {
         RegisterList {
             reg: self.reg,
             clock: self.clock,
             pc: self.pc,
             sp: self.sp,
-            f: carryf | opf | zerof | halff
+            f: if need_set { self.f | flag as u8} else { self.f }
+        }
+    }
+    /// Reset a flag
+    pub fn reset_flag(&self, flag: Flags) -> RegisterList {
+        RegisterList {
+            reg: self.reg,
+            clock: self.clock,
+            pc: self.pc,
+            sp: self.sp,
+            f: self.f & !(flag as u8)
         }
     }
 
-    /// Do a 8bit increment on a register and set the flags
-    pub fn incr(&self, reg: Register) -> RegisterList {
-        let (new, carry) = self.get(reg).overflowing_add(1);
-        self.set(reg, new).test_and_set(new, carry, false)
+    fn test_add_hc(lhs: Reg8, rhs: Reg8) -> bool {
+        (lhs & 0xf)  + (rhs & 0xf) & 0x10 == 0x10
+    }
+    fn test_sub_hc(lhs: Reg8, rhs: Reg8) -> bool { // FIXME check the maths
+        (lhs & 0xf)  - (rhs & 0xf) & 0x10 == 0x10
     }
 
-    // FIXME utiliser le même pattern fonctionnel pour toutes les fonctions
-    // FIXME enlever mmu de CPU et utiliser le paramètre des opcodes
-    // FIXME transformer les instructions pour ne plus modifier le CPU mais renvoyer un nouveau
-    /// Do a 16bit increment on two registers and set the flags
+    /// Do a 8bit increment on a register (b) and set the flags:
+    /// zero if value is zero, reset the operation flag, set the half carry flag if needed
+    /// doesn't affect the carry flag
+    pub fn incr(&self, reg: Register) -> RegisterList {
+        let (new, carry) = self.get(reg).overflowing_add(1);
+        self.set(reg, new)
+            .set_flag(Flags::ZERO, new == 0)
+            .reset_flag(Flags::OPERATION)
+            .set_flag(Flags::HALFCARRY, new & 0b1000 != 0) // if carry from bit 3
+    }
+
+    /// Do a 16bit increment on two registers
     pub fn incr_word(&self, low: Register, high: Register) -> RegisterList {
         let (newl, c) = self.get(low).overflowing_add(1);
         let (newh, carry) = if c {
@@ -107,36 +113,60 @@ impl RegisterList {
         } else {
             (self.get(high), false)
         };
-        self.set(low, newl).set(high, newh).test_and_set(newh, carry, false)
+        self.set(low, newl).set(high, newh)
     }
 
     /// Do a 8bit decrement on a register and set the flags
-    pub fn decr(&mut self, reg: Register) -> RegisterList {
+    pub fn decr(&self, reg: Register) -> RegisterList {
         let (new, carry) = self.get(reg).overflowing_sub(1);
-        self.set(reg, new).test_and_set(new, carry, true)
+        self.set(reg, new)
+            .set_flag(Flags::ZERO, new == 0)
+            .set_flag(Flags::OPERATION, true)
+            .set_flag(Flags::HALFCARRY, new & 0b111 == 0) // if no borrow from bit 4
     }
 
-    /// Do a 16bit decrement on two registers and set the flags
+    /// Do a 16bit decrement on two registers
     pub fn decr_word(&self, low: Register, high: Register) -> RegisterList {
         let (newl, c) = self.get(low).overflowing_sub(1);
-        let (newh, carry) = if c {
+        let (newh, _carry) = if c {
             self.get(high).overflowing_sub(1)
         } else {
             (self.get(high), false)
         };
-        self.set(low, newl).set(high, newh).test_and_set(newh, carry, false)
+        self.set(low, newl).set(high, newh)
     }
 
     /// Do an exclusive or on 2 register and set the flags
     pub fn xor(&self, lhs: Register, rhs: Register) -> RegisterList {
         let res = self.get(lhs) ^ self.get(rhs);
-        self.set(lhs, res).test_and_set(res, false, false)
+        self.set(lhs, res)
+            .set_flag(Flags::ZERO, res ==0)
+            .reset_flag(Flags::CARRY)
+            .reset_flag(Flags::HALFCARRY)
+            .reset_flag(Flags::OPERATION)
     }
 
     /// Add two register and set the flags
-    pub fn add(&self, lhs: Register, rhs: Register) -> RegisterList {
-        let (res, carry) = self.get(lhs).overflowing_add(self.get(rhs));
-        self.set(lhs, res).test_and_set(res, carry, false)
+    pub fn add(&self, lhs: Register, rhs: Reg8) -> RegisterList {
+        let (res, carry) = self.get(lhs).overflowing_add(rhs);
+        self.reset_flag(Flags::OPERATION)
+            .set_flag(Flags::ZERO, res == 0)
+            .set_flag(Flags::CARRY, carry)
+            .set_flag(Flags::HALFCARRY, RegisterList::test_add_hc(self.get(lhs), rhs))
+            .set(lhs, res)
+    }
+
+    pub fn add16(&self,
+                 left_high: Register, left_low: Register,
+                 right_high: Register, right_low: Register) -> RegisterList {
+        let (low, hcarry) = self.get(left_low).overflowing_add(self.get(right_low));
+        let (high, carry) = self.get(left_high).overflowing_add(self.get(right_high) + (if hcarry {1} else {0}));
+        self
+            .reset_flag(Flags::OPERATION)
+            .set_flag(Flags::HALFCARRY, RegisterList::test_add_hc(self.get(left_high), self.get(right_high)))
+            .set_flag(Flags::CARRY, carry)
+            .set(left_high, high)
+            .set(left_low, low)
     }
 
     /// Compare two registers:
@@ -147,13 +177,20 @@ impl RegisterList {
     /// Nothing   -> B < A
     pub fn cmp(&self, lhs: Register, rhs: Register) -> RegisterList {
         let (res, carry) = self.get(lhs).overflowing_sub(self.get(rhs));
-        self.test_and_set(res, carry, false)
+        self.set_flag(Flags::OPERATION, true)
+            .set_flag(Flags::ZERO, res == 0)
+            .set_flag(Flags::HALFCARRY, RegisterList::test_sub_hc(self.get(lhs), self.get(rhs))) // Set if no borrow from bit 4
+            .set_flag(Flags::CARRY, !carry)
     }
 
     /// Substract two register and set the flags
-    pub fn sub(&mut self, lhs: Register, rhs: Register) -> RegisterList {
-        let (res, carry) = self.get(lhs).overflowing_sub(self.get(rhs));
-        self.set(lhs, res).test_and_set(res, carry, true)
+    pub fn sub(&mut self, lhs: Register, rhs: Reg8) -> RegisterList {
+        let (res, carry) = self.get(lhs).overflowing_sub(rhs);
+        self.set_flag(Flags::OPERATION, true)
+            .set_flag(Flags::ZERO, res == 0)
+            .set_flag(Flags::HALFCARRY, !RegisterList::test_sub_hc(self.get(lhs), rhs)) // Set if no borrow from bit 4
+            .set_flag(Flags::CARRY, !carry) // Set if no borrow
+            .set(lhs, res)
     }
 
     pub fn set_clock(&self, clock: Clock) -> RegisterList {

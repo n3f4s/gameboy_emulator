@@ -2,8 +2,12 @@
 #![allow(unused_variables)]
 
 use z80::memory::MMU;
-use z80::register::{ Register, RegisterList };
+use z80::register::{ Register, RegisterList, Reg16 };
 use z80::clock::Clock;
+use z80::cpu::Flags;
+
+// FIXME check the rotation instructions
+// FIXME check the 16bit math op to make sure of the high/low bit
 
 // 00
 /// Do nothing
@@ -36,31 +40,127 @@ pub fn INCBC(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
         .set_clock(Clock::tick(1))
 }
 
-pub fn INCr_b(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("INCr_b not implemented") }
-pub fn DECr_b(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("DECr_b not implemented") }
-pub fn LDrn_b(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("LDrn_b not implemented") }
-pub fn RLCA(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("RLCA not implemented") }
+/// 8bit increment of b
+pub fn INCr_b(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    cpu.incr(Register::B).set_clock(Clock::tick(1))
+}
+/// 8bit decrement of b
+pub fn DECr_b(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    cpu.decr(Register::B).set_clock(Clock::tick(1))
+}
+/// Load 8bit in b
+pub fn LDrn_b(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    cpu
+        .set(Register::B, mmu.read_byte(cpu.pc, &cpu))
+        .incr_pc(1)
+        .set_clock(Clock::tick(2))
+}
+/// Rotate akku left
+pub fn RLCA(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    let bit7 = cpu.get(Register::A) & 0b1000000 != 0 ;
+    let new_a = cpu.get(Register::A).rotate_left(1);
+    cpu.set(Register::A, new_a)
+        .reset_flag(Flags::ZERO)
+        .reset_flag(Flags::OPERATION)
+        .reset_flag(Flags::HALFCARRY)
+        .set_flag(Flags::CARRY, bit7)
+        .set_clock(Clock::tick(1))
+}
 
-pub fn LDmmSP(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("LDmmSP not implemented") }
-pub fn ADDHLBC(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("ADDHLBC not implemented") }
-pub fn LDABCm(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("LDABCm not implemented") }
-pub fn DECBC(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("DECBC not implemented") }
+/// Write stack pointer (SP) at the address in memory at PC
+pub fn LDmmSP(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    let addr = mmu.read_word(cpu.pc, &cpu);
+    mmu.write_word(addr, cpu.sp);
+    cpu.incr_pc(2).set_clock(Clock::tick(3))
+}
+/// Add HL and BC and store the result in HL
+pub fn ADDHLBC(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    cpu.add16(Register::H, Register::L, Register::B, Register::C).set_clock(Clock::tick(2))
+}
+/// Load to A the content of the memory at the address stored in BC
+pub fn LDABCm(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    let addr = ((cpu.get(Register::B) as Reg16) << 8) + cpu.get(Register::C) as Reg16;
+    cpu
+        .set(Register::A, mmu.read_byte(addr.into(), &cpu))
+        .set_clock(Clock::tick(2))
+}
+/// 16bit decrement of BC
+pub fn DECBC(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    cpu.decr_word(Register::B, Register::C).set_clock(Clock::tick(2))
+}
 
-pub fn INCr_c(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("INCr_c not implemented") }
-pub fn DECr_c(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("DECr_c not implemented") }
-pub fn LDrn_c(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("LDrn_c not implemented") }
-pub fn RRCA(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("RRCA not implemented") }
+/// 8bit increment of C
+pub fn INCr_c(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    cpu.incr(Register::C).set_clock(Clock::tick(1))
+}
+/// 8bit decrement of C
+pub fn DECr_c(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    cpu.decr(Register::C).set_clock(Clock::tick(1))
+}
+/// Load the memory at the address in PC into C
+pub fn LDrn_c(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    cpu.set(Register::C, mmu.read_byte(cpu.pc, &cpu))
+        .incr_pc(1)
+        .set_clock(Clock::tick(2))
+}
+/// Rotate akku right
+pub fn RRCA(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    let bit0 = cpu.get(Register::A) & 0b1 == 1;
+    let new_a = cpu.get(Register::A).rotate_right(1);
+    cpu.set(Register::A, new_a)
+        .reset_flag(Flags::ZERO)
+        .reset_flag(Flags::OPERATION)
+        .reset_flag(Flags::HALFCARRY)
+        .set_flag(Flags::CARRY, bit0)
+        .set_clock(Clock::tick(1))
+}
 
 // 10
-pub fn DJNZn(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("DJNZn not implemented") }
-pub fn LDDEnn(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("LDDEnn not implemented") }
-pub fn LDDEmA(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("LDDEmA not implemented") }
-pub fn INCDE(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("INCDE not implemented") }
+/// On z80 it's DJNZn, on gameboy CPU it's STOP
+/// STOP halt CPU and LCD until a button is pressed
+pub fn STOP(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    // FIXME do something to wait until input???
+    cpu.set_clock(Clock::tick(1))
+}
+/// Read 2 bytes from memory (at pc and pc+1) into DE
+pub fn LDDEnn(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    let e = mmu.read_byte(cpu.pc, &cpu);
+    let d = mmu.read_byte(cpu.pc+1, &cpu);
+    cpu.set(Register::E, e).set(Register::D, d).set_clock(Clock::tick(3)).incr_pc(2)
+}
+/// Write A at the address in DE
+pub fn LDDEmA(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    let addr = ((cpu.get(Register::D) as Reg16) << 8) + cpu.get(Register::A) as Reg16;
+    mmu.write_byte(addr, cpu.get(Register::A));
+    cpu.set_clock(Clock::tick(2))
+}
+/// 16 bit incr of DE
+pub fn INCDE(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    cpu.incr_word(Register::E, Register::D).set_clock(Clock::tick(2))
+}
 
-pub fn INCr_d(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("INCr_d not implemented") }
-pub fn DECr_d(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("DECr_d not implemented") }
-pub fn LDrn_d(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("LDrn_d not implemented") }
-pub fn RLA(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("RLA not implemented") }
+/// Increment D
+pub fn INCr_d(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    cpu.incr(Register::D).set_clock(Clock::tick(1))
+}
+/// Decrement D
+pub fn DECr_d(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    cpu.decr(Register::D).set_clock(Clock::tick(1))
+}
+/// Load 8bit at address PC into D
+pub fn LDrn_d(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    cpu.set(Register::D, mmu.read_byte(cpu.pc, &cpu)).incr_pc(1).set_clock(Clock::tick(2))
+}
+/// Rotate A left using the carry
+/// |7|6|5|4|3|2|1|0| + |Fc| => |6|5|4|3|2|1|0|Fc| + |7| (Fc = carry flag)
+pub fn RLA(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
+    let val = cpu.get(Register::A);
+    let carry = val & (1 << 7);
+    let fc = if cpu.get_flag(Flags::CARRY) { 1 } else { 0 };
+    cpu.set(Register::A, val.rotate_left(1) & fc)
+        .set_flag(Flags::CARRY, carry != 0)
+        .set_clock(Clock::tick(1))
+}
 
 pub fn JRn(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("JRn not implemented") }
 pub fn ADDHLDE(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("ADDHLDE not implemented") }
@@ -226,7 +326,7 @@ pub fn ADDr_d(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!
 
 /// Add register E to register A and save in register A
 pub fn ADDr_e(cpu: RegisterList, mmu: &mut MMU) -> RegisterList {
-    cpu.add(Register::A, Register::E).set_clock(Clock::tick(1))
+    cpu.add(Register::A, cpu.get(Register::E)).set_clock(Clock::tick(1))
 }
 
 pub fn ADDr_h(cpu: RegisterList, mmu: &mut MMU) -> RegisterList { unimplemented!("ADDr_h not implemented") }

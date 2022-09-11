@@ -67,6 +67,7 @@ impl MMU {
         mmu
     }
 
+    // FIXME handle rom bigger than memory
     fn map_rom(&mut self) {
         for i in 0 .. self.rom.len() {
             self.memory[i] = self.rom[i]

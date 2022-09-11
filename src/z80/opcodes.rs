@@ -22,7 +22,7 @@ impl<'a> OpcodeMap<'a> {
                 Box::new(LDmmSP), Box::new(ADDHLBC), Box::new(LDABCm), Box::new(DECBC),
                 Box::new(INCr_c), Box::new(DECr_c), Box::new(LDrn_c), Box::new(RRCA),
                 // 10
-                Box::new(DJNZn), Box::new(LDDEnn), Box::new(LDDEmA), Box::new(INCDE),
+                Box::new(STOP), Box::new(LDDEnn), Box::new(LDDEmA), Box::new(INCDE),
                 Box::new(INCr_d), Box::new(DECr_d), Box::new(LDrn_d), Box::new(RLA),
                 Box::new(JRn), Box::new(ADDHLDE), Box::new(LDADEm), Box::new(DECDE),
                 Box::new(INCr_e), Box::new(DECr_e), Box::new(LDrn_e), Box::new(RRA),
