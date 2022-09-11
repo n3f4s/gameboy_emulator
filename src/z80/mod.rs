@@ -9,3 +9,4 @@ pub mod opcode_map;
 pub mod register;
 pub mod clock;
 pub mod instructions;
+pub mod gpu;
