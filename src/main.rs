@@ -24,10 +24,12 @@ mod z80;
 
 fn main() {
     // Init the different part of the emulator
-    let mut memory = z80::memory::MMU::new(std::fs::read("rc/ttt.gb").unwrap());
+    let rom = std::fs::read("rc/ttt.gb").unwrap();
+    let mut memory = z80::memory::MMU::new(rom[0..32000].to_vec().clone());
     let mut cpu = z80::cpu::CPU::new();
     let opcodemap = z80::opcodes::OpcodeMap::new();
     let mut cycle_count = 0;
+    let mut gpu = z80::gpu::GPU::default();
     loop {
         // fetch
         println!(">>>> Cycle {}", cycle_count);
@@ -40,5 +42,7 @@ fn main() {
         cpu.update_clock();
         // FIXME add stop condition
         cycle_count += 1;
+        gpu = gpu.step(&cpu, &memory);
+
     }
 }
