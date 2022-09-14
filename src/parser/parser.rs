@@ -60,11 +60,12 @@ fn identifier(input: &str) -> IResult<&str, Expression> {
     map(alpha1, |i: &str| Expression::Identifier(i.to_string()))(input)
 }
 fn binary_operator(input: &str) -> IResult<&str, BinOp> {
-    map(one_of("+-><"), |c| match c {
-        '+' => BinOp::Add,
-        '-' => BinOp::Sub,
-        '>' => BinOp::RShift,
-        '<' => BinOp::LShift,
+    map_res(one_of("+-><"), |c| match c {
+        '+' => Ok(BinOp::Add),
+        '-' => Ok(BinOp::Sub),
+        '>' => Ok(BinOp::RShift),
+        '<' => Ok(BinOp::LShift),
+        o => Err(format!("Unknonw operator {}", o))
     })(input)
 }
 fn expression(input: &str) -> IResult<&str, Expression> {
