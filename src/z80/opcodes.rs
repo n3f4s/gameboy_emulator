@@ -1,8 +1,8 @@
 #![allow(dead_code)] // FIXME remove
 #![allow(unused_variables)] // FIXME remove
-use z80::instructions::*;
-use z80::memory::MMU;
-use z80::register::RegisterList;
+use crate::z80::instructions::*;
+use crate::z80::memory::MMU;
+use crate::z80::register::RegisterList;
 
 pub type Opcode = usize; // FIXME adapt to the actual number of opcode
 pub type Instruction = fn(RegisterList, &mut MMU) -> RegisterList;

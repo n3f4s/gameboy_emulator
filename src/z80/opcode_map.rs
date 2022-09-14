@@ -1,7 +1,7 @@
 
-use z80::opcodes::*;
-use z80::register::RegisterList;
-use z80::memory::MMU;
+use crate::z80::opcodes::*;
+use crate::z80::register::RegisterList;
+use crate::z80::memory::MMU;
 
 impl<'a> OpcodeMap<'a> {
     pub fn map(&self, opcode: Opcode, cpu: RegisterList, mmu: &mut MMU) -> RegisterList {

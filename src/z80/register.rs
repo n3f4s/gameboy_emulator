@@ -1,8 +1,8 @@
 #![allow(dead_code)] // FIXME remove
 #![allow(unused_variables)] // FIXME remove
-use z80::clock::Clock;
-use z80::cpu::Flags;
-use z80::memory::MMU;
+use crate::z80::clock::Clock;
+use crate::z80::cpu::Flags;
+use crate::z80::memory::MMU;
 
 pub struct RegWord {
     pub low: u8,

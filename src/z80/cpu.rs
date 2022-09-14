@@ -2,8 +2,8 @@
 #![allow(unused_variables)] // FIXME remove
 #![allow(non_snake_case)]
 
-use z80::register::*;
-use z80::clock::*;
+use crate::z80::register::*;
+use crate::z80::clock::*;
 
 #[repr(u8)]
 pub enum Flags {

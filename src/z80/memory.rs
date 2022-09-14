@@ -17,7 +17,7 @@ FF80-FFFE   High RAM (HRAM)
 FFFF        Interrupt Enable Register
  */
 
-use z80::register;
+use crate::z80::register;
 
 pub type Address = u16; // type of an address value
 

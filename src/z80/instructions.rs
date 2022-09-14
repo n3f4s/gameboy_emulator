@@ -1,10 +1,10 @@
 #![allow(non_snake_case)]
 #![allow(unused_variables)]
 
-use z80::memory::MMU;
-use z80::register::{ Register, RegisterList, Reg16 };
-use z80::clock::Clock;
-use z80::cpu::Flags;
+use crate::z80::memory::MMU;
+use crate::z80::register::{ Register, RegisterList, Reg16 };
+use crate::z80::clock::Clock;
+use crate::z80::cpu::Flags;
 
 // FIXME check the rotation instructions
 // FIXME check the 16bit math op to make sure of the high/low bit

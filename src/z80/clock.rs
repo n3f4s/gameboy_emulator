@@ -1,7 +1,7 @@
 #![allow(dead_code)] // FIXME remove
 #![allow(unused_variables)] // FIXME remove
 // FIXME: see what the clock members represents
-use z80::register::Reg16;
+use crate::z80::register::Reg16;
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub struct Clock {
     pub m: Reg16,

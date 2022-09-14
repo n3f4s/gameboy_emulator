@@ -1,6 +1,6 @@
-use z80::cpu::CPU;
-use z80::memory::MMU;
-use z80::register::{ Reg8, Reg16 };
+use crate::z80::cpu::CPU;
+use crate::z80::memory::MMU;
+use crate::z80::register::{ Reg8, Reg16 };
 
 #[repr(u8)]
 #[derive(Clone, Debug)]
