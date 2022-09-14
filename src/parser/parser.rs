@@ -1,6 +1,4 @@
-extern crate nom;
-
-use self::nom::{
+use nom::{
     IResult,
     Parser,
     character::complete::{ alpha1, char, one_of, multispace0 },
