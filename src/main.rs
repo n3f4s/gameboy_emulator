@@ -1,5 +1,6 @@
 
 mod z80;
+mod parser;
 
 /*
  * TODO???
@@ -21,6 +22,16 @@ mod z80;
 // FIXME : faire en sorte que le CPU n'ai qu'une ref vers la mémoire
 // FIXME add login
 // FIXME split part into threads?
+
+
+#[cfg(test)]
+mod tests {
+    fn parse_identifier() {
+        let (rest, id) = parser::identifier("tests").unwrap();
+        assert_eq!(rest, "");
+        assert_eq!(id, "tests");
+    }
+}
 
 fn main() {
     // Init the different part of the emulator

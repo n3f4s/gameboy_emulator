@@ -5,3 +5,7 @@ authors = ["n3f4s <tiv.crb@gmail.com>"]
 
 [build-dependencies]
 regex = "1"
+
+[dependencies]
+
+nom = "7.1.1"
