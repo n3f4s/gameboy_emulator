@@ -23,13 +23,85 @@ mod parser;
 // FIXME add login
 // FIXME split part into threads?
 
-
 #[cfg(test)]
 mod tests {
+    use super::parser;
+    #[test]
     fn parse_identifier() {
-        let (rest, id) = parser::identifier("tests").unwrap();
+        let (rest, id) = parser::parser::identifier("tests1").unwrap();
+        assert!(match id {
+            parser::parser::Expression::Identifier(s) => s == "tests1",
+            _ => false
+        });
         assert_eq!(rest, "");
-        assert_eq!(id, "tests");
+
+        assert!(match parser::parser::identifier("-1s") {
+            Ok(_) => false,
+            Err(_) => true,
+        });
+    }
+
+    #[test]
+    fn parse_binop() {
+        assert!(match parser::parser::binary_operator("+") {
+            Ok((_, parser::parser::BinOp::Add)) => true,
+            _ => false
+        });
+        assert!(match parser::parser::binary_operator("-") {
+            Ok((_, parser::parser::BinOp::Sub)) => true,
+            _ => false
+        });
+        assert!(match parser::parser::binary_operator(">") {
+            Ok((_, parser::parser::BinOp::RShift)) => true,
+            _ => false
+        });
+        assert!(match parser::parser::binary_operator("<") {
+            Ok((_, parser::parser::BinOp::LShift)) => true,
+            _ => false
+        });
+        assert!(match parser::parser::binary_operator("*") {
+            Err(_) => true,
+            _ => false
+        });
+    }
+
+    #[test]
+    fn parse_bin_operation() {
+        use parser::parser::{ Expression, BinOp };
+        assert!(
+            match parser::parser::binary_operation("foo + bar") {
+                Ok(( _, Expression::BinaryOperation(b))) =>
+                    match *b {
+                        (Expression::Identifier(l),
+                         BinOp::Add,
+                         Expression::Identifier(r)) => l == "foo" && r == "bar",
+                        _ => false, }
+                _ => false,
+            }
+        );
+    }
+
+    #[test]
+    fn parse_funcall() {
+        use parser::parser::{funcall, Expression};
+        match funcall("(funcname arg1 arg2)") {
+            Ok((_, Expression::FunctionCall(name, args))) => {
+                assert!(name == "funcname", "The function name wasn't parsed correctly");
+                assert!(args.len() == 2 ,
+                        "The arguments weren't parsed correctly: there is not the right number of arguments");
+                match &args[0] {
+                    Expression::Identifier(a) => assert!(a == "arg1", "The first argument name wasn't parsed correctly"),
+                    _ => assert!(false,  "The first argument wasn't parsed correctly")
+                };
+                match &args[0] {
+                    Expression::Identifier(a) => assert!(a == "arg1",
+                                                         "The first argument name wasn't parsed correctly"),
+                    _ => assert!(false,  "The first argument wasn't parsed correctly"),
+                };
+            },
+            Ok(_) => assert!(false, "The function call wasn't parsed correctly: the wrong Expression was returned"),
+            Err(e) => assert!(false, "There was an error when parsing the function call: {}", e),
+        };
     }
 }
 

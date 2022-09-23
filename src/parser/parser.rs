@@ -1,7 +1,7 @@
 use nom::{
     IResult,
     Parser,
-    character::complete::{ alpha1, char, one_of, multispace0 },
+    character::complete::{ alpha1, char, one_of, multispace0, alphanumeric1 },
     combinator::{ map_res, map },
     sequence::{ tuple, delimited },
     branch::alt,
@@ -44,25 +44,26 @@ condition: if expression then statement else statement end
 */
 
 // FIXME add whitespaces where needed
+// FIXME add immediate
 
-enum BinOp {
+pub enum BinOp {
     Add, Sub, RShift, LShift
 }
-enum Expression {
+pub enum Expression {
     Identifier(String),
     BinaryOperation(Box<(Expression, BinOp, Expression)>),
     FunctionCall(String, Vec<Expression>)
 }
 
-struct Instruction {}
+pub struct Instruction {}
 
-fn whitespaces<'a, O, E: ParseError<&'a str>, F: Parser<&'a str, O, E>>(f: F) -> impl Parser<&'a str, O, E> {
+pub fn whitespaces<'a, O, E: ParseError<&'a str>, F: Parser<&'a str, O, E>>(f: F) -> impl Parser<&'a str, O, E> {
     delimited(multispace0, f, multispace0)
 }
-fn identifier(input: &str) -> IResult<&str, Expression> {
-    map(alpha1, |i: &str| Expression::Identifier(i.to_string()))(input)
+pub fn identifier(input: &str) -> IResult<&str, Expression> {
+    map(alphanumeric1, |i: &str| Expression::Identifier(i.to_string()))(input)
 }
-fn binary_operator(input: &str) -> IResult<&str, BinOp> {
+pub fn binary_operator(input: &str) -> IResult<&str, BinOp> {
     map_res(one_of("+-><"), |c| match c {
         '+' => Ok(BinOp::Add),
         '-' => Ok(BinOp::Sub),
@@ -71,18 +72,18 @@ fn binary_operator(input: &str) -> IResult<&str, BinOp> {
         o => Err(format!("Unknonw operator {}", o))
     })(input)
 }
-fn expression(input: &str) -> IResult<&str, Expression> {
+pub fn expression(input: &str) -> IResult<&str, Expression> {
     alt((identifier,
         funcall,
         binary_operation))(input)
 }
-fn binary_operation(input: &str) -> IResult<&str, Expression> {
+pub fn binary_operation(input: &str) -> IResult<&str, Expression> {
     map(
         tuple((expression, whitespaces(binary_operator), expression)),
         |(e1, op, e2)| Expression::BinaryOperation(Box::new((e1, op, e2)))
     )(input)
 }
-fn funcall(input: &str) -> IResult<&str, Expression> {
+pub fn funcall(input: &str) -> IResult<&str, Expression> {
     map(
         delimited(
             char('('),
